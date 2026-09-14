@@ -115,3 +115,9 @@ variable "kms_key_arn" {
   default     = ""
   description = "AWS Key Management Service (AWS KMS) customer master key (CMK) to use when creating the encrypted volume. encrypted must be set to true when this is set."
 }
+
+variable "execution_role_arn" {
+  type        = string
+  default     = ""
+  description = "ARN of custom execution role. If empty, a default role with AmazonECSTaskExecutionRolePolicy is created."
+}

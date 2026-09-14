@@ -53,7 +53,7 @@ resource "aws_ecs_task_definition" "ec2" {
   family                   = module.labels.id
   container_definitions    = file(var.file_name)
   task_role_arn            = var.task_role_arn
-  execution_role_arn       = module.iam-role-td.arn
+  execution_role_arn       = var.execution_role_arn != "" ? var.execution_role_arn : module.iam-role-td.arn
   network_mode             = var.network_mode
   ipc_mode                 = var.ipc_mode
   pid_mode                 = var.pid_mode
@@ -82,7 +82,7 @@ resource "aws_ecs_task_definition" "fargate" {
   family                   = module.labels.id
   container_definitions    = file(var.file_name)
   task_role_arn            = var.task_role_arn
-  execution_role_arn       = module.iam-role-td.arn
+  execution_role_arn       = var.execution_role_arn != "" ? var.execution_role_arn : module.iam-role-td.arn
   network_mode             = "awsvpc"
   cpu                      = var.cpu
   memory                   = var.memory

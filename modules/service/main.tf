@@ -60,14 +60,15 @@ module "lb" {
   source  = "clouddrove/alb/aws"
   version = "2.0.0"
 
-  name                       = "alb"
+  name                       = format("%s-alb", var.name)
   load_balancer_type         = "application"
   enable                     = true
   internal                   = true
   enable_deletion_protection = false
   with_target_group          = true
-  https_enabled              = true
+  https_enabled              = var.https_enabled
   http_enabled               = true
+  http_listener_type         = var.http_listener_type
   subnets                    = var.lb_subnet
   target_id                  = []
   vpc_id                     = var.vpc_id

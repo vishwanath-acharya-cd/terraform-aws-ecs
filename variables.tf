@@ -553,3 +553,27 @@ variable "listener_certificate_arn" {
   default     = ""
   description = "The ARN of the SSL server certificate. Exactly one certificate is required if the protocol is HTTPS."
 }
+
+variable "ec2_cluster_name" {
+  type        = string
+  default     = ""
+  description = "Name of an existing ECS cluster to deploy services into. If empty, uses the cluster created by this module."
+}
+
+variable "http_listener_type" {
+  type        = string
+  default     = "forward"
+  description = "The type of routing action for HTTP listener. Valid values: forward, redirect, fixed-response."
+}
+
+variable "https_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable HTTPS listener on ALB."
+}
+
+variable "execution_role_arn" {
+  type        = string
+  default     = ""
+  description = "ARN of custom execution role for task definition. If empty, a default role is created."
+}

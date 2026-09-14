@@ -229,3 +229,15 @@ variable "listener_certificate_arn" {
   default     = ""
   description = "The ARN of the SSL server certificate. Exactly one certificate is required if the protocol is HTTPS."
 }
+
+variable "http_listener_type" {
+  type        = string
+  default     = "forward"
+  description = "The type of routing action for HTTP listener. Valid values: forward, redirect, fixed-response."
+}
+
+variable "https_enabled" {
+  type        = bool
+  default     = false
+  description = "Enable HTTPS listener on ALB."
+}

@@ -87,7 +87,7 @@ module "service" {
   label_order                        = var.label_order
   enabled                            = var.enabled
   ec2_service_enabled                = var.ec2_service_enabled
-  ec2_cluster_name                   = module.ecs.ec2_id
+  ec2_cluster_name                   = var.ec2_cluster_name != "" ? var.ec2_cluster_name : module.ecs.ec2_id
   deployment_maximum_percent         = var.deployment_maximum_percent
   deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
   desired_count                      = var.desired_count
@@ -116,6 +116,8 @@ module "service" {
   target_type                        = var.target_type
   network_mode                       = var.network_mode
   listener_certificate_arn           = var.listener_certificate_arn
+  https_enabled                      = var.https_enabled
+  http_listener_type                 = var.http_listener_type
   extra_tags                         = var.extra_tags
 }
 
@@ -133,6 +135,7 @@ module "task-definition" {
   ec2_td_enabled           = var.ec2_td_enabled
   fargate_td_enabled       = var.fargate_td_enabled
   task_role_arn            = var.task_role_arn
+  execution_role_arn       = var.execution_role_arn
   file_name                = var.file_name
   container_log_group_name = var.container_log_group_name
   ipc_mode                 = var.ipc_mode
