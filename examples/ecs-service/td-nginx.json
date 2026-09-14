@@ -15,16 +15,6 @@
       { "name": "APP_ENV",  "value": "production" },
       { "name": "APP_NAME", "value": "nginx-service" }
     ],
-    "secrets": [
-      {
-        "name":      "DB_PASSWORD",
-        "valueFrom": "arn:aws:secretsmanager:eu-west-1:924144197303:secret:ecs/nginx/db-password"
-      },
-      {
-        "name":      "API_KEY",
-        "valueFrom": "arn:aws:secretsmanager:eu-west-1:924144197303:secret:ecs/nginx/api-key"
-      }
-    ],
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
