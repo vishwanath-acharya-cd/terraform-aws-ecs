@@ -24,7 +24,7 @@ resource "local_file" "private_key" {
 ## ECS Capacity Provider — links ASG to ECS cluster (from ecs-cluster example)
 ##-----------------------------------------------------------------------------
 resource "aws_ecs_capacity_provider" "ec2" {
-  count = var.ec2_cluster_enabled && var.autoscaling_policies_enabled == false ? 1 : 0
+  count = var.ec2_cluster_enabled && var.autoscaling_policies_enabled == false && var.autoscaling_group_arn != "" ? 1 : 0
   name  = "cp-${var.name}-${var.environment}"
 
   auto_scaling_group_provider {
@@ -40,7 +40,7 @@ resource "aws_ecs_capacity_provider" "ec2" {
 }
 
 resource "aws_ecs_cluster_capacity_providers" "ec2" {
-  count              = var.ec2_cluster_enabled && var.autoscaling_policies_enabled == false ? 1 : 0
+  count              = var.ec2_cluster_enabled && var.autoscaling_policies_enabled == false && var.autoscaling_group_arn != "" ? 1 : 0
   cluster_name       = module.ecs.ec2_name
   capacity_providers = [aws_ecs_capacity_provider.ec2[0].name]
 
