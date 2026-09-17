@@ -1,4 +1,77 @@
 ##-----------------------------------------------------------------------------
+## SSH Key — self-generated, private key saved locally (from ecs-cluster example)
+##-----------------------------------------------------------------------------
+resource "tls_private_key" "ssh" {
+  count     = var.ec2_cluster_enabled ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "ssh" {
+  count      = var.ec2_cluster_enabled ? 1 : 0
+  key_name   = "${var.name}-${var.environment}-key"
+  public_key = tls_private_key.ssh[0].public_key_openssh
+}
+
+resource "local_file" "private_key" {
+  count           = var.ec2_cluster_enabled ? 1 : 0
+  content         = tls_private_key.ssh[0].private_key_pem
+  filename        = "${path.module}/${var.name}-${var.environment}-key.pem"
+  file_permission = "0600"
+}
+
+##-----------------------------------------------------------------------------
+## ECS Capacity Provider — links ASG to ECS cluster (from ecs-cluster example)
+##-----------------------------------------------------------------------------
+resource "aws_ecs_capacity_provider" "ec2" {
+  count = var.ec2_cluster_enabled && var.autoscaling_policies_enabled == false ? 1 : 0
+  name  = "${var.name}-${var.environment}-cp"
+
+  auto_scaling_group_provider {
+    auto_scaling_group_arn = module.auto-scaling.autoscaling_group_arn
+
+    managed_scaling {
+      status                    = "ENABLED"
+      target_capacity           = 80
+      minimum_scaling_step_size = 1
+      maximum_scaling_step_size = 3
+    }
+  }
+}
+
+resource "aws_ecs_cluster_capacity_providers" "ec2" {
+  count              = var.ec2_cluster_enabled && var.autoscaling_policies_enabled == false ? 1 : 0
+  cluster_name       = module.ecs.ec2_name
+  capacity_providers = [aws_ecs_capacity_provider.ec2[0].name]
+
+  default_capacity_provider_strategy {
+    capacity_provider = aws_ecs_capacity_provider.ec2[0].name
+    weight            = 1
+    base              = 1
+  }
+}
+
+##-----------------------------------------------------------------------------
+## IAM Role Policy — Secrets Manager access for task execution (from ecs-service example)
+##-----------------------------------------------------------------------------
+resource "aws_iam_role_policy" "secrets_access" {
+  count = var.execution_role_arn != "" ? 1 : 0
+  name  = "${var.name}-${var.environment}-secrets-access"
+  role  = var.execution_role_arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = ["arn:aws:secretsmanager:*:*:secret:ecs/${var.name}/*"]
+      }
+    ]
+  })
+}
+
+##-----------------------------------------------------------------------------
 ## auto-scaling module call.
 ##-----------------------------------------------------------------------------
 module "auto-scaling" {
