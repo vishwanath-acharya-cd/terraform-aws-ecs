@@ -25,7 +25,7 @@ resource "local_file" "private_key" {
 ##-----------------------------------------------------------------------------
 resource "aws_ecs_capacity_provider" "ec2" {
   count = var.ec2_cluster_enabled && var.autoscaling_policies_enabled == false ? 1 : 0
-  name  = "${var.name}-${var.environment}-cp"
+  name  = "cp-${var.name}-${var.environment}"
 
   auto_scaling_group_provider {
     auto_scaling_group_arn = var.autoscaling_group_arn
