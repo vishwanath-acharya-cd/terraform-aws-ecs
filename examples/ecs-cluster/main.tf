@@ -178,25 +178,6 @@ data "aws_iam_policy_document" "kms" {
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
-## SSH Key — self-generated, private key saved locally
-##---------------------------------------------------------------------------------------------------------------------------
-resource "tls_private_key" "ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "aws_key_pair" "ssh" {
-  key_name   = "ecs-cluster-test-key"
-  public_key = tls_private_key.ssh.public_key_openssh
-}
-
-resource "local_file" "private_key" {
-  content         = tls_private_key.ssh.private_key_pem
-  filename        = "${path.module}/ecs-cluster-test-key.pem"
-  file_permission = "0600"
-}
-
-##---------------------------------------------------------------------------------------------------------------------------
 ## IAM Role — ECS EC2 instance profile (allows EC2 to register with ECS cluster)
 ##---------------------------------------------------------------------------------------------------------------------------
 module "iam_role_ecs_instance" {
@@ -274,7 +255,7 @@ module "ec2_autoscaling" {
   ## Launch Template
   image_id                  = "ami-04166c7920d59ea63" # ECS-optimized AMI eu-west-1
   instance_type             = "t3.medium"
-  key_name                  = aws_key_pair.ssh.key_name
+  key_name                  = module.ecs_cluster.ssh_key_name
   security_group_ids        = [module.sg_ssh.security_group_id, module.sg_lb.security_group_id]
   iam_instance_profile_name = module.iam_role_ecs_instance.name
   instance_profile_enabled  = true
@@ -309,31 +290,4 @@ module "ec2_autoscaling" {
   scale_up_desired = 2
 }
 
-##---------------------------------------------------------------------------------------------------------------------------
-## ECS Capacity Provider — links ASG to ECS cluster for automatic instance registration
-##---------------------------------------------------------------------------------------------------------------------------
-resource "aws_ecs_capacity_provider" "ec2" {
-  name = "cluster-test-cp"
 
-  auto_scaling_group_provider {
-    auto_scaling_group_arn = module.ec2_autoscaling.autoscaling_group_arn
-
-    managed_scaling {
-      status                    = "ENABLED"
-      target_capacity           = 80
-      minimum_scaling_step_size = 1
-      maximum_scaling_step_size = 3
-    }
-  }
-}
-
-resource "aws_ecs_cluster_capacity_providers" "ec2" {
-  cluster_name       = module.ecs_cluster.ec2_cluster_name
-  capacity_providers = [aws_ecs_capacity_provider.ec2.name]
-
-  default_capacity_provider_strategy {
-    capacity_provider = aws_ecs_capacity_provider.ec2.name
-    weight            = 1
-    base              = 1
-  }
-}

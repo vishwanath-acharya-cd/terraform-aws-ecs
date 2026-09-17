@@ -133,26 +133,6 @@ data "aws_iam_policy_document" "task_exec_assume" {
   }
 }
 
-## Inline policy to allow reading secrets from Secrets Manager
-resource "aws_iam_role_policy" "secrets_access" {
-  name   = "ecs-secrets-access"
-  role   = module.iam_role_task_exec.name
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue"]
-        Resource = [
-          "arn:aws:secretsmanager:eu-west-1:*:secret:ecs/nginx/*",
-          "arn:aws:secretsmanager:eu-west-1:*:secret:ecs/apache/*"
-        ]
-      }
-    ]
-  })
-}
-
 ##---------------------------------------------------------------------------------------------------------------------------
 ## Security Group — for ECS services
 ##---------------------------------------------------------------------------------------------------------------------------

@@ -199,3 +199,10 @@ output "td_tags" {
   description = "The tags of task definition"
   value       = module.task-definition.tags
 }
+
+## SSH Key
+
+output "ssh_key_name" {
+  description = "The name of the SSH key pair created for EC2 instances."
+  value       = length(aws_key_pair.ssh) > 0 ? aws_key_pair.ssh[0].key_name : ""
+}
