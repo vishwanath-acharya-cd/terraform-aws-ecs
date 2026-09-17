@@ -236,6 +236,7 @@ module "ecs_cluster" {
   autoscaling_policies_enabled = false
   ec2_service_enabled          = false
   ec2_td_enabled               = false
+  autoscaling_group_arn        = module.ec2_autoscaling.autoscaling_group_arn
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------

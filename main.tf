@@ -28,7 +28,7 @@ resource "aws_ecs_capacity_provider" "ec2" {
   name  = "${var.name}-${var.environment}-cp"
 
   auto_scaling_group_provider {
-    auto_scaling_group_arn = module.auto-scaling.autoscaling_group_arn
+    auto_scaling_group_arn = var.autoscaling_group_arn
 
     managed_scaling {
       status                    = "ENABLED"
@@ -69,64 +69,6 @@ resource "aws_iam_role_policy" "secrets_access" {
       }
     ]
   })
-}
-
-##-----------------------------------------------------------------------------
-## auto-scaling module call.
-##-----------------------------------------------------------------------------
-module "auto-scaling" {
-  source                                    = "./modules/auto-scaling"
-  name                                      = var.name
-  repository                                = var.repository
-  environment                               = var.environment
-  managedby                                 = var.managedby
-  delimiter                                 = var.delimiter
-  label_order                               = var.label_order
-  image_id                                  = var.image_id
-  instance_type                             = var.instance_type
-  vpc_id                                    = var.vpc_id
-  subnet_ids                                = var.subnet_ids
-  health_check_type                         = var.health_check_type
-  min_size                                  = var.min_size
-  max_size                                  = var.max_size
-  spot_max_size                             = var.spot_max_size
-  spot_min_size                             = var.spot_min_size
-  spot_enabled                              = var.spot_enabled
-  spot_scale_down_desired                   = var.spot_scale_down_desired
-  spot_scale_up_desired                     = var.spot_scale_up_desired
-  scale_up_desired                          = var.scale_up_desired
-  scale_down_desired                        = var.scale_down_desired
-  schedule_enabled                          = var.schedule_enabled
-  spot_schedule_enabled                     = var.spot_schedule_enabled
-  scheduler_down                            = var.scheduler_down
-  scheduler_up                              = var.scheduler_up
-  min_size_scaledown                        = var.min_size_scaledown
-  max_size_scaledown                        = var.max_size_scaledown
-  spot_min_size_scaledown                   = var.spot_min_size_scaledown
-  spot_max_size_scaledown                   = var.spot_max_size_scaledown
-  spot_price                                = var.spot_price
-  volume_size                               = var.volume_size
-  ebs_encryption                            = var.ebs_encryption
-  ebs_optimized                             = var.ebs_optimized
-  volume_type                               = var.volume_type
-  spot_instance_type                        = var.spot_instance_type
-  load_balancers                            = var.load_balancers
-  target_group_arns                         = var.target_group_arns
-  wait_for_capacity_timeout                 = var.wait_for_capacity_timeout
-  associate_public_ip_address               = var.associate_public_ip_address
-  enabled                                   = var.enabled
-  key_name                                  = var.key_name
-  autoscaling_policies_enabled              = var.autoscaling_policies_enabled
-  memory_reservation_high_threshold_percent = var.memory_reservation_high_threshold_percent
-  memory_reservation_low_threshold_percent  = var.memory_reservation_low_threshold_percent
-  additional_security_group_ids             = var.additional_security_group_ids
-  lb_security_group                         = var.lb_security_group
-  cloudwatch_prefix                         = var.cloudwatch_prefix
-  retention_in_days                         = var.retention_in_days
-  kms_key_arn                               = var.kms_key_arn
-  fargate_cluster_enabled                   = var.fargate_cluster_enabled
-  cluster_name                              = module.ecs.ec2_name
-  extra_tags                                = var.extra_tags
 }
 
 ##-----------------------------------------------------------------------------

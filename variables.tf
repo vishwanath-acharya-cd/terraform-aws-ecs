@@ -49,6 +49,12 @@ variable "delimiter" {
   description = "Delimiter to be used between `organization`, `environment`, `name` and `attributes`."
 }
 
+variable "autoscaling_group_arn" {
+  type        = string
+  default     = ""
+  description = "ARN of the external Auto Scaling Group to link with the ECS capacity provider."
+}
+
 ##----------------------------------------------------------------------------------
 ## EC2.
 ##----------------------------------------------------------------------------------
