@@ -224,6 +224,7 @@ module "ecs_nginx" {
   container_log_group_name = "nginx-container-logs"
   task_role_arn            = module.iam_role_task_exec.arn
   execution_role_arn             = module.iam_role_task_exec.arn
+  execution_role_name            = module.iam_role_task_exec.name
   secrets_manager_policy_enabled = true
   retention_in_days        = 30
 
@@ -278,6 +279,7 @@ module "ecs_apache" {
   container_log_group_name = "apache-container-logs"
   task_role_arn            = module.iam_role_task_exec.arn
   execution_role_arn             = module.iam_role_task_exec.arn
+  execution_role_name            = module.iam_role_task_exec.name
   secrets_manager_policy_enabled = true
   retention_in_days        = 30
 

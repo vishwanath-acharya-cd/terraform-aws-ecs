@@ -57,7 +57,7 @@ resource "aws_ecs_cluster_capacity_providers" "ec2" {
 resource "aws_iam_role_policy" "secrets_access" {
   count = var.secrets_manager_policy_enabled ? 1 : 0
   name  = "${var.name}-${var.environment}-secrets-access"
-  role  = var.execution_role_arn
+  role  = var.execution_role_name
 
   policy = jsonencode({
     Version = "2012-10-17"

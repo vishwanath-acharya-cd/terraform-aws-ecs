@@ -584,6 +584,12 @@ variable "https_enabled" {
   description = "Enable HTTPS listener on ALB."
 }
 
+variable "execution_role_name" {
+  type        = string
+  default     = ""
+  description = "Name of the ECS task execution IAM role. Required when secrets_manager_policy_enabled is true."
+}
+
 variable "execution_role_arn" {
   type        = string
   default     = ""
