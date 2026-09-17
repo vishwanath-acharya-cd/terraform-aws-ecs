@@ -15,7 +15,7 @@ output "public_subnet_ids" {
 
 output "keypair_name" {
   description = "EC2 key pair name"
-  value       = aws_key_pair.ssh.key_name
+  value       = module.ecs_cluster.ssh_key_name
 }
 
 output "iam_role_arn" {
