@@ -49,6 +49,12 @@ variable "delimiter" {
   description = "Delimiter to be used between `organization`, `environment`, `name` and `attributes`."
 }
 
+variable "secrets_manager_policy_enabled" {
+  type        = bool
+  default     = false
+  description = "Set to true to attach a Secrets Manager read policy to the execution role."
+}
+
 variable "autoscaling_group_arn" {
   type        = string
   default     = ""

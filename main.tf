@@ -55,7 +55,7 @@ resource "aws_ecs_cluster_capacity_providers" "ec2" {
 ## IAM Role Policy — Secrets Manager access for task execution (from ecs-service example)
 ##-----------------------------------------------------------------------------
 resource "aws_iam_role_policy" "secrets_access" {
-  count = var.execution_role_arn != "" ? 1 : 0
+  count = var.secrets_manager_policy_enabled ? 1 : 0
   name  = "${var.name}-${var.environment}-secrets-access"
   role  = var.execution_role_arn
 

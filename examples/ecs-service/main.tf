@@ -223,7 +223,8 @@ module "ecs_nginx" {
   file_name                = "./td-nginx.json"
   container_log_group_name = "nginx-container-logs"
   task_role_arn            = module.iam_role_task_exec.arn
-  execution_role_arn       = module.iam_role_task_exec.arn
+  execution_role_arn             = module.iam_role_task_exec.arn
+  secrets_manager_policy_enabled = true
   retention_in_days        = 30
 
   depends_on = [module.secret_nginx, module.iam_role_task_exec]
@@ -276,7 +277,8 @@ module "ecs_apache" {
   file_name                = "./td-apache.json"
   container_log_group_name = "apache-container-logs"
   task_role_arn            = module.iam_role_task_exec.arn
-  execution_role_arn       = module.iam_role_task_exec.arn
+  execution_role_arn             = module.iam_role_task_exec.arn
+  secrets_manager_policy_enabled = true
   retention_in_days        = 30
 
   depends_on = [module.secret_apache, module.iam_role_task_exec]
