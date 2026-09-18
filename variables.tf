@@ -55,6 +55,12 @@ variable "secrets_manager_policy_enabled" {
   description = "Set to true to attach a Secrets Manager read policy to the execution role."
 }
 
+variable "capacity_provider_enabled" {
+  type        = bool
+  default     = false
+  description = "Set to true to create ECS capacity provider and link it with the provided autoscaling_group_arn."
+}
+
 variable "autoscaling_group_arn" {
   type        = string
   default     = ""
