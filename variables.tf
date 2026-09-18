@@ -613,3 +613,9 @@ variable "execution_role_arn" {
   default     = ""
   description = "ARN of custom execution role for task definition. If empty, a default role is created."
 }
+
+variable "template_vars" {
+  type        = map(string)
+  default     = null
+  description = "Optional variables passed to templatefile() for container definitions. If null, file() is used."
+}

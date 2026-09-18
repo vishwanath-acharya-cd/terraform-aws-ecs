@@ -64,6 +64,16 @@ module "secret_nginx" {
   ]
 }
 
+data "aws_secretsmanager_secret" "nginx_db_password" {
+  name       = "ecs/nginx-fargate/db-password"
+  depends_on = [module.secret_nginx]
+}
+
+data "aws_secretsmanager_secret" "nginx_api_key" {
+  name       = "ecs/nginx-fargate/api-key"
+  depends_on = [module.secret_nginx]
+}
+
 ##---------------------------------------------------------------------------------------------------------------------------
 ## Secrets Manager — apache
 ##---------------------------------------------------------------------------------------------------------------------------
@@ -89,6 +99,16 @@ module "secret_apache" {
       recovery_window_in_days = 7
     }
   ]
+}
+
+data "aws_secretsmanager_secret" "apache_db_password" {
+  name       = "ecs/apache-fargate/db-password"
+  depends_on = [module.secret_apache]
+}
+
+data "aws_secretsmanager_secret" "apache_api_key" {
+  name       = "ecs/apache-fargate/api-key"
+  depends_on = [module.secret_apache]
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
@@ -291,7 +311,11 @@ module "ecs_nginx" {
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
-  file_name                = "./td-nginx.json"
+  file_name                = "./td-nginx.tftpl"
+  template_vars = {
+    db_password_arn = data.aws_secretsmanager_secret.nginx_db_password.arn
+    api_key_arn     = data.aws_secretsmanager_secret.nginx_api_key.arn
+  }
   container_log_group_name = "nginx-fargate-container-logs"
   task_role_arn            = module.iam_role_task_exec.arn
   execution_role_arn       = module.iam_role_task_exec.arn
@@ -350,7 +374,11 @@ module "ecs_apache" {
   network_mode             = "awsvpc"
   cpu                      = 512
   memory                   = 1024
-  file_name                = "./td-apache.json"
+  file_name                = "./td-apache.tftpl"
+  template_vars = {
+    db_password_arn = data.aws_secretsmanager_secret.apache_db_password.arn
+    api_key_arn     = data.aws_secretsmanager_secret.apache_api_key.arn
+  }
   container_log_group_name = "apache-fargate-container-logs"
   task_role_arn            = module.iam_role_task_exec.arn
   execution_role_arn       = module.iam_role_task_exec.arn

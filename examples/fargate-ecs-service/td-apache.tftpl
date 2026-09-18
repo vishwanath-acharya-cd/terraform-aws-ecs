@@ -1,0 +1,31 @@
+[
+  {
+    "name": "apache",
+    "image": "httpd:latest",
+    "essential": true,
+    "cpu": 256,
+    "memory": 512,
+    "portMappings": [
+      {
+        "containerPort": 80,
+        "hostPort": 80
+      }
+    ],
+    "environment": [
+      { "name": "APP_ENV",  "value": "production" },
+      { "name": "APP_NAME", "value": "apache-fargate-service" }
+    ],
+    "secrets": [
+      { "name": "DB_PASSWORD", "valueFrom": "${db_password_arn}" },
+      { "name": "API_KEY",     "valueFrom": "${api_key_arn}" }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group":         "apache-fargate-container-logs",
+        "awslogs-region":        "eu-west-1",
+        "awslogs-stream-prefix": "apache"
+      }
+    }
+  }
+]

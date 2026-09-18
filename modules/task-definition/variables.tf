@@ -121,3 +121,9 @@ variable "execution_role_arn" {
   default     = ""
   description = "ARN of custom execution role. If empty, a default role with AmazonECSTaskExecutionRolePolicy is created."
 }
+
+variable "template_vars" {
+  type        = map(string)
+  default     = null
+  description = "Optional variables to pass to templatefile() for the container definitions file. If null, file() is used instead."
+}

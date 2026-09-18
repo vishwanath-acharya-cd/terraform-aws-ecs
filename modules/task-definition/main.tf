@@ -51,7 +51,7 @@ data "aws_iam_policy_document" "assume_role_td" {
 resource "aws_ecs_task_definition" "ec2" {
   count                    = local.ec2_enabled ? 1 : 0
   family                   = module.labels.id
-  container_definitions    = file(var.file_name)
+  container_definitions    = var.template_vars != null ? templatefile(var.file_name, var.template_vars) : file(var.file_name)
   task_role_arn            = var.task_role_arn
   execution_role_arn       = var.execution_role_arn != "" ? var.execution_role_arn : module.iam-role-td.arn
   network_mode             = var.network_mode
@@ -80,7 +80,7 @@ resource "aws_cloudwatch_log_group" "ec2-container" {
 resource "aws_ecs_task_definition" "fargate" {
   count                    = local.fargate_enabled ? 1 : 0
   family                   = module.labels.id
-  container_definitions    = file(var.file_name)
+  container_definitions    = var.template_vars != null ? templatefile(var.file_name, var.template_vars) : file(var.file_name)
   task_role_arn            = var.task_role_arn
   execution_role_arn       = var.execution_role_arn != "" ? var.execution_role_arn : module.iam-role-td.arn
   network_mode             = "awsvpc"

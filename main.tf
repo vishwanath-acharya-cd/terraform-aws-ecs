@@ -163,4 +163,5 @@ module "task-definition" {
   kms_key_arn              = var.kms_key_arn
   retention_in_days        = var.retention_in_days
   extra_tags               = var.extra_tags
+  template_vars            = var.template_vars
 }
