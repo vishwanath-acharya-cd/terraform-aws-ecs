@@ -241,3 +241,9 @@ variable "https_enabled" {
   default     = false
   description = "Enable HTTPS listener on ALB."
 }
+
+variable "target_group_arn" {
+  type        = string
+  default     = ""
+  description = "ARN of an existing target group to attach the service to. When set, the internal ALB is not created."
+}

@@ -54,7 +54,7 @@ data "aws_iam_policy_document" "assume_role_ecs" {
 ##-----------------------------------------------------
 
 ##-----------------------------------------------------
-## Application Load Balancer (ALB) is a fully managed layer 7 load balancing service that load balances incoming traffic across multiple targets, such as Amazon EC2 instances.
+## Application Load Balancer — only created when no external target_group_arn is provided.
 ##-----------------------------------------------------
 module "lb" {
   source  = "clouddrove/alb/aws"
@@ -62,7 +62,7 @@ module "lb" {
 
   name                       = format("%s-alb", var.name)
   load_balancer_type         = "application"
-  enable                     = true
+  enable                     = var.target_group_arn == "" ? true : false
   internal                   = true
   enable_deletion_protection = false
   with_target_group          = true
@@ -98,6 +98,10 @@ module "lb" {
   ]
 }
 
+locals {
+  resolved_target_group_arn = var.target_group_arn != "" ? var.target_group_arn : module.lb.main_target_group_arn
+}
+
 ##-----------------------------------------------------
 ## aws_ecs_service. An Amazon ECS service allows you to run and maintain a specified number of instances of a task definition simultaneously in an Amazon ECS cluster.
 ##-----------------------------------------------------
@@ -121,7 +125,7 @@ resource "aws_ecs_service" "ec2" {
   }
 
   load_balancer {
-    target_group_arn = module.lb.main_target_group_arn
+    target_group_arn = local.resolved_target_group_arn
     container_name   = var.container_name
     container_port   = var.container_port
   }
@@ -171,7 +175,7 @@ resource "aws_ecs_service" "fargate" {
   }
 
   load_balancer {
-    target_group_arn = module.lb.main_target_group_arn
+    target_group_arn = local.resolved_target_group_arn
     container_name   = var.container_name
     container_port   = var.container_port
   }

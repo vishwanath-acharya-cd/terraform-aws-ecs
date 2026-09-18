@@ -133,6 +133,7 @@ module "service" {
   listener_certificate_arn           = var.listener_certificate_arn
   https_enabled                      = var.https_enabled
   http_listener_type                 = var.http_listener_type
+  target_group_arn                   = var.target_group_arn
   extra_tags                         = var.extra_tags
 }
 

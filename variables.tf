@@ -590,6 +590,12 @@ variable "https_enabled" {
   description = "Enable HTTPS listener on ALB."
 }
 
+variable "target_group_arn" {
+  type        = string
+  default     = ""
+  description = "ARN of an existing target group. When set, no internal ALB is created inside the service module."
+}
+
 variable "execution_role_name" {
   type        = string
   default     = ""

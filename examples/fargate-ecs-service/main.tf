@@ -11,17 +11,14 @@ locals {
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
-## Remote state — reads outputs from fargate cluster deployment.
-## Replace cluster_name with actual fargate cluster name.
+## Remote state — reads outputs from fargate cluster deployment
 ##---------------------------------------------------------------------------------------------------------------------------
 data "aws_ecs_cluster" "main" {
   cluster_name = "fargate-test-cluster"
 }
 
 data "aws_vpc" "main" {
-  tags = {
-    Name = "vpc-test"
-  }
+  tags = { Name = "vpc-test" }
 }
 
 data "aws_subnets" "private" {
@@ -29,9 +26,7 @@ data "aws_subnets" "private" {
     name   = "vpc-id"
     values = [data.aws_vpc.main.id]
   }
-  tags = {
-    Type = "private"
-  }
+  tags = { Type = "private" }
 }
 
 data "aws_subnets" "public" {
@@ -39,13 +34,11 @@ data "aws_subnets" "public" {
     name   = "vpc-id"
     values = [data.aws_vpc.main.id]
   }
-  tags = {
-    Type = "public"
-  }
+  tags = { Type = "public" }
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
-## Secrets Manager — nginx secrets
+## Secrets Manager — nginx
 ##---------------------------------------------------------------------------------------------------------------------------
 module "secret_nginx" {
   source  = "clouddrove/secrets-manager/aws"
@@ -57,26 +50,22 @@ module "secret_nginx" {
 
   secrets = [
     {
-      name        = "ecs/nginx-fargate/db-password"
-      description = "Database password for nginx fargate service"
-      secret_key_value = {
-        DB_PASSWORD = "change-me-nginx-db-pass"
-      }
+      name                    = "ecs/nginx-fargate/db-password"
+      description             = "Database password for nginx fargate service"
+      secret_key_value        = { DB_PASSWORD = "change-me-nginx-db-pass" }
       recovery_window_in_days = 7
     },
     {
-      name        = "ecs/nginx-fargate/api-key"
-      description = "API key for nginx fargate service"
-      secret_key_value = {
-        API_KEY = "change-me-nginx-api-key"
-      }
+      name                    = "ecs/nginx-fargate/api-key"
+      description             = "API key for nginx fargate service"
+      secret_key_value        = { API_KEY = "change-me-nginx-api-key" }
       recovery_window_in_days = 7
     }
   ]
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
-## Secrets Manager — apache secrets
+## Secrets Manager — apache
 ##---------------------------------------------------------------------------------------------------------------------------
 module "secret_apache" {
   source  = "clouddrove/secrets-manager/aws"
@@ -88,26 +77,22 @@ module "secret_apache" {
 
   secrets = [
     {
-      name        = "ecs/apache-fargate/db-password"
-      description = "Database password for apache fargate service"
-      secret_key_value = {
-        DB_PASSWORD = "change-me-apache-db-pass"
-      }
+      name                    = "ecs/apache-fargate/db-password"
+      description             = "Database password for apache fargate service"
+      secret_key_value        = { DB_PASSWORD = "change-me-apache-db-pass" }
       recovery_window_in_days = 7
     },
     {
-      name        = "ecs/apache-fargate/api-key"
-      description = "API key for apache fargate service"
-      secret_key_value = {
-        API_KEY = "change-me-apache-api-key"
-      }
+      name                    = "ecs/apache-fargate/api-key"
+      description             = "API key for apache fargate service"
+      secret_key_value        = { API_KEY = "change-me-apache-api-key" }
       recovery_window_in_days = 7
     }
   ]
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
-## IAM Role — Task execution role (Fargate requires this for pulling images + secrets)
+## IAM Role — shared task execution role
 ##---------------------------------------------------------------------------------------------------------------------------
 module "iam_role_task_exec" {
   source  = "clouddrove/iam-role/aws"
@@ -134,7 +119,7 @@ data "aws_iam_policy_document" "task_exec_assume" {
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
-## Security Group — for Fargate ECS services (awsvpc mode needs its own SG)
+## Security Group — for Fargate ECS services
 ##---------------------------------------------------------------------------------------------------------------------------
 module "sg_service" {
   source  = "clouddrove/security-group/aws"
@@ -177,19 +162,99 @@ module "sg_service" {
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
-## ECS Fargate Service — Nginx
+## Shared ALB — 1 load balancer for both nginx and apache fargate services
+##---------------------------------------------------------------------------------------------------------------------------
+module "alb" {
+  source  = "clouddrove/alb/aws"
+  version = "2.0.0"
+
+  name                       = "ecs-fargate-alb"
+  load_balancer_type         = "application"
+  enable                     = true
+  internal                   = true
+  enable_deletion_protection = false
+  https_enabled              = false
+  http_enabled               = true
+  http_listener_type         = "forward"
+  subnets                    = data.aws_subnets.public.ids
+  target_id                  = []
+  vpc_id                     = data.aws_vpc.main.id
+  https_port                 = 443
+  listener_type              = "forward"
+  target_group_port          = 80
+  with_target_group          = true
+
+  # Default target group — nginx
+  target_groups = [
+    {
+      backend_protocol     = "HTTP"
+      backend_port         = 80
+      target_type          = "ip"
+      deregistration_delay = 300
+      health_check = {
+        enabled             = true
+        interval            = 30
+        path                = "/"
+        port                = "traffic-port"
+        healthy_threshold   = 3
+        unhealthy_threshold = 3
+        timeout             = 10
+        protocol            = "HTTP"
+        matcher             = "200-399"
+      }
+    }
+  ]
+}
+
+## Separate target group for apache
+resource "aws_lb_target_group" "apache" {
+  name        = "ecs-fargate-apache-tg"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    interval            = 30
+    path                = "/"
+    port                = "traffic-port"
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    timeout             = 10
+    protocol            = "HTTP"
+    matcher             = "200-399"
+  }
+}
+
+## Path-based listener rule — /apache* → apache target group
+resource "aws_lb_listener_rule" "apache" {
+  listener_arn = module.alb.http_listener_arn
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.apache.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/apache*"]
+    }
+  }
+}
+
+##---------------------------------------------------------------------------------------------------------------------------
+## ECS Fargate Service — Nginx (uses shared ALB default target group)
 ##---------------------------------------------------------------------------------------------------------------------------
 module "ecs_nginx" {
   source = "../../"
 
-  ## Tags
   name        = "nginx-fargate"
   repository  = "https://github.com/clouddrove/terraform-aws-ecs"
   environment = local.environment
   label_order = local.label_order
   enabled     = true
 
-  ## Network
   vpc_id     = data.aws_vpc.main.id
   subnet_ids = data.aws_subnets.private.ids
   lb_subnet  = data.aws_subnets.public.ids
@@ -197,12 +262,10 @@ module "ecs_nginx" {
   lb_security_group = module.sg_service.security_group_id
   https_enabled     = false
 
-  ## ECS Cluster — reference existing fargate cluster, disable cluster creation
   ec2_cluster_enabled     = false
   fargate_cluster_enabled = false
   ec2_cluster_name        = data.aws_ecs_cluster.main.cluster_name
 
-  ## Fargate Service
   fargate_service_enabled          = true
   desired_count                    = 1
   assign_public_ip                 = false
@@ -220,7 +283,9 @@ module "ecs_nginx" {
   deployment_minimum_healthy_percent = 100
   health_check_grace_period_seconds  = 60
 
-  ## Task Definition
+  ## Shared ALB — skip internal ALB creation
+  target_group_arn = module.alb.main_target_group_arn
+
   fargate_td_enabled       = true
   network_mode             = "awsvpc"
   cpu                      = 512
@@ -228,28 +293,26 @@ module "ecs_nginx" {
   file_name                = "./td-nginx.json"
   container_log_group_name = "nginx-fargate-container-logs"
   task_role_arn            = module.iam_role_task_exec.arn
-  execution_role_arn             = module.iam_role_task_exec.arn
-  execution_role_name            = module.iam_role_task_exec.name
+  execution_role_arn       = module.iam_role_task_exec.arn
+  execution_role_name      = module.iam_role_task_exec.name
   secrets_manager_policy_enabled = true
   retention_in_days        = 30
 
-  depends_on = [module.secret_nginx, module.iam_role_task_exec]
+  depends_on = [module.secret_nginx, module.iam_role_task_exec, module.alb]
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
-## ECS Fargate Service — Apache
+## ECS Fargate Service — Apache (uses shared ALB apache target group)
 ##---------------------------------------------------------------------------------------------------------------------------
 module "ecs_apache" {
   source = "../../"
 
-  ## Tags
   name        = "apache-fargate"
   repository  = "https://github.com/clouddrove/terraform-aws-ecs"
   environment = local.environment
   label_order = local.label_order
   enabled     = true
 
-  ## Network
   vpc_id     = data.aws_vpc.main.id
   subnet_ids = data.aws_subnets.private.ids
   lb_subnet  = data.aws_subnets.public.ids
@@ -257,12 +320,10 @@ module "ecs_apache" {
   lb_security_group = module.sg_service.security_group_id
   https_enabled     = false
 
-  ## ECS Cluster — reference existing fargate cluster, disable cluster creation
   ec2_cluster_enabled     = false
   fargate_cluster_enabled = false
   ec2_cluster_name        = data.aws_ecs_cluster.main.cluster_name
 
-  ## Fargate Service
   fargate_service_enabled          = true
   desired_count                    = 1
   assign_public_ip                 = false
@@ -280,7 +341,9 @@ module "ecs_apache" {
   deployment_minimum_healthy_percent = 100
   health_check_grace_period_seconds  = 60
 
-  ## Task Definition
+  ## Shared ALB — skip internal ALB creation
+  target_group_arn = aws_lb_target_group.apache.arn
+
   fargate_td_enabled       = true
   network_mode             = "awsvpc"
   cpu                      = 512
@@ -288,10 +351,10 @@ module "ecs_apache" {
   file_name                = "./td-apache.json"
   container_log_group_name = "apache-fargate-container-logs"
   task_role_arn            = module.iam_role_task_exec.arn
-  execution_role_arn             = module.iam_role_task_exec.arn
-  execution_role_name            = module.iam_role_task_exec.name
+  execution_role_arn       = module.iam_role_task_exec.arn
+  execution_role_name      = module.iam_role_task_exec.name
   secrets_manager_policy_enabled = true
   retention_in_days        = 30
 
-  depends_on = [module.secret_apache, module.iam_role_task_exec]
+  depends_on = [module.secret_apache, module.iam_role_task_exec, aws_lb_target_group.apache]
 }
