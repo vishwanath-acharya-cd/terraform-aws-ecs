@@ -284,6 +284,7 @@ module "ecs_nginx" {
   health_check_grace_period_seconds  = 60
 
   ## Shared ALB — skip internal ALB creation
+  create_alb       = false
   target_group_arn = module.alb.main_target_group_arn
 
   fargate_td_enabled       = true
@@ -342,6 +343,7 @@ module "ecs_apache" {
   health_check_grace_period_seconds  = 60
 
   ## Shared ALB — skip internal ALB creation
+  create_alb       = false
   target_group_arn = aws_lb_target_group.apache.arn
 
   fargate_td_enabled       = true

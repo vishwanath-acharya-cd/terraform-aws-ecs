@@ -134,6 +134,7 @@ module "service" {
   https_enabled                      = var.https_enabled
   http_listener_type                 = var.http_listener_type
   target_group_arn                   = var.target_group_arn
+  create_alb                         = var.create_alb
   extra_tags                         = var.extra_tags
 }
 

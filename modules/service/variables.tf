@@ -247,3 +247,9 @@ variable "target_group_arn" {
   default     = ""
   description = "ARN of an existing target group to attach the service to. When set, the internal ALB is not created."
 }
+
+variable "create_alb" {
+  type        = bool
+  default     = true
+  description = "Set to false to skip creating the internal ALB. Use together with target_group_arn to attach to an existing ALB."
+}

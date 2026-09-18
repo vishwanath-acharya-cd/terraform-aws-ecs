@@ -62,7 +62,7 @@ module "lb" {
 
   name                       = format("%s-alb", var.name)
   load_balancer_type         = "application"
-  enable                     = var.target_group_arn == "" ? true : false
+  enable                     = var.create_alb
   internal                   = true
   enable_deletion_protection = false
   with_target_group          = true

@@ -596,6 +596,12 @@ variable "target_group_arn" {
   description = "ARN of an existing target group. When set, no internal ALB is created inside the service module."
 }
 
+variable "create_alb" {
+  type        = bool
+  default     = true
+  description = "Set to false to skip creating the internal ALB. Use together with target_group_arn."
+}
+
 variable "execution_role_name" {
   type        = string
   default     = ""
