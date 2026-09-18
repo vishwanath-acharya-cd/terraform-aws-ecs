@@ -194,6 +194,49 @@ module "sg_service" {
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
+## Security Group — for shared ALB
+##---------------------------------------------------------------------------------------------------------------------------
+module "sg_alb" {
+  source  = "clouddrove/security-group/aws"
+  version = "2.0.3"
+
+  name        = "ecs-alb"
+  environment = local.environment
+  label_order = local.label_order
+  vpc_id      = data.aws_vpc.main.id
+
+  new_sg_ingress_rules = [
+    {
+      key                          = "http"
+      ip_protocol                  = "tcp"
+      from_port                    = 80
+      to_port                      = 80
+      cidr_ipv4                    = "0.0.0.0/0"
+      cidr_ipv6                    = null
+      prefix_list_id               = null
+      referenced_security_group_id = null
+      description                  = "Allow HTTP"
+      tags                         = {}
+    }
+  ]
+
+  new_sg_egress_rules = [
+    {
+      key                          = "all-ipv4"
+      ip_protocol                  = "-1"
+      from_port                    = null
+      to_port                      = null
+      cidr_ipv4                    = "0.0.0.0/0"
+      cidr_ipv6                    = null
+      prefix_list_id               = null
+      referenced_security_group_id = null
+      description                  = "Allow all outbound"
+      tags                         = {}
+    }
+  ]
+}
+
+##---------------------------------------------------------------------------------------------------------------------------
 ## Shared ALB — 1 load balancer for both nginx and apache
 ##---------------------------------------------------------------------------------------------------------------------------
 module "alb" {
@@ -203,12 +246,13 @@ module "alb" {
   name                       = "ecs-ec2-alb"
   load_balancer_type         = "application"
   enable                     = true
-  internal                   = true
+  internal                   = false
   enable_deletion_protection = false
   https_enabled              = false
   http_enabled               = true
   http_listener_type         = "forward"
   subnets                    = data.aws_subnets.public.ids
+  security_groups            = [module.sg_alb.security_group_id]
   target_id                  = []
   vpc_id                     = data.aws_vpc.main.id
   https_port                 = 443
@@ -216,7 +260,6 @@ module "alb" {
   target_group_port          = 80
   with_target_group          = true
 
-  # Default target group — nginx (catches all traffic not matched by other rules)
   target_groups = [
     {
       backend_protocol     = "HTTP"
@@ -291,7 +334,7 @@ module "ecs_nginx" {
   subnet_ids = data.aws_subnets.private.ids
   lb_subnet  = data.aws_subnets.public.ids
 
-  lb_security_group = module.sg_service.security_group_id
+  lb_security_group = module.sg_alb.security_group_id
   https_enabled     = false
 
   ec2_cluster_enabled     = false
@@ -350,7 +393,7 @@ module "ecs_apache" {
   subnet_ids = data.aws_subnets.private.ids
   lb_subnet  = data.aws_subnets.public.ids
 
-  lb_security_group = module.sg_service.security_group_id
+  lb_security_group = module.sg_alb.security_group_id
   https_enabled     = false
 
   ec2_cluster_enabled     = false
