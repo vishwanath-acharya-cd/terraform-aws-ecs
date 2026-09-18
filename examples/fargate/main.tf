@@ -176,7 +176,7 @@ module "ecs" {
   ## Task Definition
   fargate_td_enabled       = true
   cpu                      = 512
-  network_mode             = "bridge"
+  network_mode             = "awsvpc"
   memory                   = 1024
   file_name                = "./td-fargate.json"
   container_log_group_name = "fargate-container-logs"

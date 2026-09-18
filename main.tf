@@ -116,7 +116,7 @@ module "service" {
   container_name                     = var.container_name
   container_port                     = var.container_port
   fargate_service_enabled            = var.fargate_service_enabled
-  fargate_cluster_name               = module.ecs.fargate_id
+  fargate_cluster_name               = var.ec2_cluster_name != "" ? var.ec2_cluster_name : module.ecs.fargate_id
   platform_version                   = var.platform_version
   fargate_task_definition            = module.task-definition.fargate_arn
   fargate_capacity_provider_simple   = var.fargate_capacity_provider_simple

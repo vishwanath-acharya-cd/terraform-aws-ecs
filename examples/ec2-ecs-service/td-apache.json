@@ -15,6 +15,10 @@
       { "name": "APP_ENV",  "value": "production" },
       { "name": "APP_NAME", "value": "apache-service" }
     ],
+    "secrets": [
+      { "name": "DB_PASSWORD", "valueFrom": "ecs/apache/db-password:DB_PASSWORD::" },
+      { "name": "API_KEY",     "valueFrom": "ecs/apache/api-key:API_KEY::" }
+    ],
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
