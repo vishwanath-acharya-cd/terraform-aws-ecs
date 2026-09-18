@@ -123,6 +123,18 @@ module "sg_lb" {
       referenced_security_group_id = null
       description                  = "Allow HTTPS"
       tags                         = {}
+    },
+    {
+      key                          = "ephemeral"
+      ip_protocol                  = "tcp"
+      from_port                    = 32768
+      to_port                      = 65535
+      cidr_ipv4                    = "0.0.0.0/0"
+      cidr_ipv6                    = null
+      prefix_list_id               = null
+      referenced_security_group_id = null
+      description                  = "Allow ALB health checks on ephemeral ports (ECS bridge mode)"
+      tags                         = {}
     }
   ]
 
