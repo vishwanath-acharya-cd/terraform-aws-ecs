@@ -157,6 +157,18 @@ module "sg_service" {
       referenced_security_group_id = null
       description                  = "Allow HTTP from VPC"
       tags                         = {}
+    },
+    {
+      key                          = "ephemeral-ports"
+      ip_protocol                  = "tcp"
+      from_port                    = 32768
+      to_port                      = 65535
+      cidr_ipv4                    = data.aws_vpc.main.cidr_block
+      cidr_ipv6                    = null
+      prefix_list_id               = null
+      referenced_security_group_id = null
+      description                  = "Allow ALB health checks on ephemeral ports (EC2 bridge mode)"
+      tags                         = {}
     }
   ]
 
