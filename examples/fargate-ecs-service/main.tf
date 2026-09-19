@@ -11,30 +11,20 @@ locals {
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
-## Remote state — reads outputs from fargate cluster deployment
+## Remote state — reads VPC/subnet outputs from fargate-cluster example
 ##---------------------------------------------------------------------------------------------------------------------------
-data "aws_ecs_cluster" "main" {
-  cluster_name = "fargate-test-cluster"
-}
-
-data "aws_vpc" "main" {
-  tags = { Name = "vpc-test" }
-}
-
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.main.id]
+data "terraform_remote_state" "fargate_cluster" {
+  backend = "local"
+  config = {
+    path = "../fargate-cluster/terraform.tfstate"
   }
-  tags = { Type = "private" }
 }
 
-data "aws_subnets" "public" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.main.id]
-  }
-  tags = { Type = "public" }
+locals {
+  vpc_id             = data.terraform_remote_state.fargate_cluster.outputs.vpc_id
+  private_subnet_ids = data.terraform_remote_state.fargate_cluster.outputs.private_subnet_ids
+  public_subnet_ids  = data.terraform_remote_state.fargate_cluster.outputs.public_subnet_ids
+  cluster_name       = data.terraform_remote_state.fargate_cluster.outputs.fargate_cluster_name
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
@@ -148,7 +138,7 @@ module "sg_service" {
   name        = "ecs-fargate-service"
   environment = local.environment
   label_order = local.label_order
-  vpc_id      = data.aws_vpc.main.id
+  vpc_id      = local.vpc_id
 
   new_sg_ingress_rules = [
     {
@@ -156,7 +146,7 @@ module "sg_service" {
       ip_protocol                  = "tcp"
       from_port                    = 80
       to_port                      = 80
-      cidr_ipv4                    = data.aws_vpc.main.cidr_block
+      cidr_ipv4                    = local.vpc_id
       cidr_ipv6                    = null
       prefix_list_id               = null
       referenced_security_group_id = null
@@ -196,9 +186,9 @@ module "alb" {
   https_enabled              = false
   http_enabled               = true
   http_listener_type         = "forward"
-  subnets                    = data.aws_subnets.public.ids
+  subnets                    = local.public_subnet_ids
   target_id                  = []
-  vpc_id                     = data.aws_vpc.main.id
+  vpc_id                     = local.vpc_id
   https_port                 = 443
   listener_type              = "forward"
   target_group_port          = 80
@@ -231,7 +221,7 @@ resource "aws_lb_target_group" "apache" {
   name        = "ecs-fargate-apache-tg"
   port        = 80
   protocol    = "HTTP"
-  vpc_id      = data.aws_vpc.main.id
+  vpc_id      = local.vpc_id
   target_type = "ip"
 
   health_check {
@@ -275,16 +265,16 @@ module "ecs_nginx" {
   label_order = local.label_order
   enabled     = true
 
-  vpc_id     = data.aws_vpc.main.id
-  subnet_ids = data.aws_subnets.private.ids
-  lb_subnet  = data.aws_subnets.public.ids
+  vpc_id     = local.vpc_id
+  subnet_ids = local.private_subnet_ids
+  lb_subnet  = local.public_subnet_ids
 
   lb_security_group = module.sg_service.security_group_id
   https_enabled     = false
 
   ec2_cluster_enabled     = false
   fargate_cluster_enabled = false
-  ec2_cluster_name        = data.aws_ecs_cluster.main.cluster_name
+  ec2_cluster_name        = local.cluster_name
 
   fargate_service_enabled          = true
   desired_count                    = 1
@@ -338,16 +328,16 @@ module "ecs_apache" {
   label_order = local.label_order
   enabled     = true
 
-  vpc_id     = data.aws_vpc.main.id
-  subnet_ids = data.aws_subnets.private.ids
-  lb_subnet  = data.aws_subnets.public.ids
+  vpc_id     = local.vpc_id
+  subnet_ids = local.private_subnet_ids
+  lb_subnet  = local.public_subnet_ids
 
   lb_security_group = module.sg_service.security_group_id
   https_enabled     = false
 
   ec2_cluster_enabled     = false
   fargate_cluster_enabled = false
-  ec2_cluster_name        = data.aws_ecs_cluster.main.cluster_name
+  ec2_cluster_name        = local.cluster_name
 
   fargate_service_enabled          = true
   desired_count                    = 1

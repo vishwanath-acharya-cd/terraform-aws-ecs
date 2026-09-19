@@ -65,7 +65,7 @@ module "lb" {
   enable                     = var.create_alb
   internal                   = true
   enable_deletion_protection = false
-  with_target_group          = true
+  with_target_group          = var.create_alb
   https_enabled              = var.https_enabled
   http_enabled               = true
   http_listener_type         = var.http_listener_type
