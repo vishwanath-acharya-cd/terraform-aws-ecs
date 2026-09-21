@@ -47,3 +47,8 @@ output "autoscaling_group_name" {
   description = "Auto Scaling Group name"
   value       = module.ecs_cluster.autoscaling_group_name
 }
+
+output "vpc_cidr_block" {
+  description = "VPC CIDR block"
+  value       = module.vpc.vpc_cidr_block
+}

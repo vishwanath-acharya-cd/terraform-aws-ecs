@@ -22,6 +22,7 @@ data "terraform_remote_state" "ecs_cluster" {
 
 locals {
   vpc_id             = data.terraform_remote_state.ecs_cluster.outputs.vpc_id
+  vpc_cidr_block     = data.terraform_remote_state.ecs_cluster.outputs.vpc_cidr_block
   private_subnet_ids = data.terraform_remote_state.ecs_cluster.outputs.private_subnet_ids
   public_subnet_ids  = data.terraform_remote_state.ecs_cluster.outputs.public_subnet_ids
   cluster_name       = data.terraform_remote_state.ecs_cluster.outputs.ec2_cluster_name
@@ -146,7 +147,7 @@ module "sg_service" {
       ip_protocol                  = "tcp"
       from_port                    = 80
       to_port                      = 80
-      cidr_ipv4                    = local.vpc_id
+      cidr_ipv4                    = local.vpc_cidr_block
       cidr_ipv6                    = null
       prefix_list_id               = null
       referenced_security_group_id = null
@@ -158,7 +159,7 @@ module "sg_service" {
       ip_protocol                  = "tcp"
       from_port                    = 32768
       to_port                      = 65535
-      cidr_ipv4                    = local.vpc_id
+      cidr_ipv4                    = local.vpc_cidr_block
       cidr_ipv6                    = null
       prefix_list_id               = null
       referenced_security_group_id = null
