@@ -42,6 +42,14 @@ module "subnets" {
   type                = "public-private"
   igw_id              = module.vpc.igw_id
   ipv6_cidr_block     = module.vpc.ipv6_cidr_block
+
+  ## Allow all traffic in private subnet NACLs
+  private_inbound_acl_rules = [
+    { rule_number = 100, rule_action = "allow", from_port = 0, to_port = 0, protocol = "-1", cidr_block = "0.0.0.0/0" }
+  ]
+  private_outbound_acl_rules = [
+    { rule_number = 100, rule_action = "allow", from_port = 0, to_port = 0, protocol = "-1", cidr_block = "0.0.0.0/0" }
+  ]
 }
 
 ##---------------------------------------------------------------------------------------------------------------------------
@@ -281,6 +289,7 @@ module "ec2_autoscaling" {
     echo ECS_CLUSTER=${module.ecs_cluster.ec2_cluster_name} >> /etc/ecs/ecs.config
     echo ECS_AVAILABLE_LOGGING_DRIVERS='["json-file","awslogs"]' >> /etc/ecs/ecs.config
     echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
+    systemctl restart ecs
   EOF
   )
   ebs_encryption = true
