@@ -321,6 +321,11 @@ module "ec2_autoscaling" {
     echo ECS_AVAILABLE_LOGGING_DRIVERS='["json-file","awslogs"]' >> /etc/ecs/ecs.config
     echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
     systemctl restart ecs
+    # Retry ECS agent if not registered within 60s
+    sleep 60
+    if ! curl -sf http://localhost:51678/v1/metadata | grep -q clusterName; then
+      systemctl restart ecs
+    fi
   EOF
   )
   ebs_encryption = true
