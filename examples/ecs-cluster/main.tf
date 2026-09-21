@@ -286,8 +286,8 @@ module "ec2_autoscaling" {
   volume_size    = 20
 
   ## ASG
-  subnet_ids                  = module.subnets.public_subnet_id
-  associate_public_ip_address = true
+  subnet_ids                  = module.subnets.private_subnet_id
+  associate_public_ip_address = false
   min_size          = 1
   max_size          = 3
   desired_capacity  = 1
