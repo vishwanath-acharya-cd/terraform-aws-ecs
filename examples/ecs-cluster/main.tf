@@ -62,7 +62,7 @@ module "sg_ssh" {
       ip_protocol                  = "tcp"
       from_port                    = 22
       to_port                      = 22
-      cidr_ipv4                    = "0.0.0.0/0"
+      cidr_ipv4                    = module.vpc.vpc_cidr_block
       cidr_ipv6                    = null
       prefix_list_id               = null
       referenced_security_group_id = null
@@ -175,6 +175,8 @@ module "kms_key" {
   policy                   = data.aws_iam_policy_document.kms.json
 }
 
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "kms" {
   version = "2012-10-17"
   statement {
@@ -182,7 +184,7 @@ data "aws_iam_policy_document" "kms" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = ["*"]
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
     }
     actions   = ["kms:*"]
     resources = ["*"]
