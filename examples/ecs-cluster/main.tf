@@ -317,18 +317,11 @@ module "ec2_autoscaling" {
   instance_profile_enabled  = true
   user_data_base64 = base64encode(<<-EOF
     #!/bin/bash
-    # Stop ECS agent first
-    systemctl stop ecs
-
-    # Write config
-    cat > /etc/ecs/ecs.config << 'ECSEOF'
+    cat > /etc/ecs/ecs.config << ECSEOF
 ECS_CLUSTER=${module.ecs_cluster.ec2_cluster_name}
 ECS_AVAILABLE_LOGGING_DRIVERS=["json-file","awslogs"]
 ECS_ENABLE_SPOT_INSTANCE_DRAINING=true
 ECSEOF
-
-    # Start ECS agent after config is written
-    systemctl start ecs
   EOF
   )
   ebs_encryption = true
