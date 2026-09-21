@@ -317,30 +317,18 @@ module "ec2_autoscaling" {
   instance_profile_enabled  = true
   user_data_base64 = base64encode(<<-EOF
     #!/bin/bash
-    # Write ECS config
-    echo ECS_CLUSTER=${module.ecs_cluster.ec2_cluster_name} >> /etc/ecs/ecs.config
-    echo ECS_AVAILABLE_LOGGING_DRIVERS='["json-file","awslogs"]' >> /etc/ecs/ecs.config
-    echo ECS_ENABLE_SPOT_INSTANCE_DRAINING=true >> /etc/ecs/ecs.config
+    # Stop ECS agent first
+    systemctl stop ecs
 
-    # Create a systemd service that retries ECS agent registration after boot
-    cat > /etc/systemd/system/ecs-register-retry.service << 'UNIT'
-    [Unit]
-    Description=Retry ECS agent registration until cluster is joined
-    After=ecs.service network-online.target
-    Wants=network-online.target
+    # Write config
+    cat > /etc/ecs/ecs.config << 'ECSEOF'
+ECS_CLUSTER=${module.ecs_cluster.ec2_cluster_name}
+ECS_AVAILABLE_LOGGING_DRIVERS=["json-file","awslogs"]
+ECS_ENABLE_SPOT_INSTANCE_DRAINING=true
+ECSEOF
 
-    [Service]
-    Type=oneshot
-    ExecStart=/bin/bash -c 'for i in $(seq 1 10); do sleep 30; curl -sf http://localhost:51678/v1/metadata | grep -q clusterName && exit 0; systemctl restart ecs; done'
-    RemainAfterExit=yes
-
-    [Install]
-    WantedBy=multi-user.target
-    UNIT
-
-    systemctl daemon-reload
-    systemctl enable ecs-register-retry.service
-    systemctl restart ecs
+    # Start ECS agent after config is written
+    systemctl start ecs
   EOF
   )
   ebs_encryption = true
